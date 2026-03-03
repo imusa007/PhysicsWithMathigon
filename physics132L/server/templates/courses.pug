@@ -1,0 +1,7 @@
+extends ../../node_modules/@mathigon/studio/server/templates/_layout.pug
+
+block main
+  .container.narrow
+    h1 Available Labs
+    for c in courses || []
+      +course(c)

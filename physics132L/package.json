@@ -1,0 +1,17 @@
+{
+  "name": "physics132l-lab",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "mgon-build --assets --minify",
+    "dev": "mgon-build --assets --watch & nodemon --exec ts-node --skip-ignore server/app.ts",
+    "start": "node server/app.js"
+  },
+  "dependencies": {
+    "@mathigon/studio": "^0.1.43"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "nodemon": "^3.0.0"
+  }
+}

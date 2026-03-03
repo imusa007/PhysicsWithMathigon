@@ -1,0 +1,72 @@
+.course-kinematics {
+  .lab-container {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+  }
+
+  .data-panel {
+    flex: 0 0 auto;
+
+    h3 {
+      margin-bottom: 0.5rem;
+      color: #FF6F00;
+      font-size: 1rem;
+    }
+  }
+
+  .vt-table {
+    border-collapse: collapse;
+
+    th {
+      background: #FF6F00;
+      color: white;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 2px 4px;
+    }
+
+    input {
+      width: 80px;
+      border: none;
+      outline: none;
+      padding: 4px 6px;
+      font-size: 0.9rem;
+      background: transparent;
+
+      &:focus {
+        background: #fff8e1;
+      }
+    }
+  }
+
+  .results-box {
+    margin-top: 1rem;
+    padding: 10px 14px;
+    background: #fff3e0;
+    border-left: 3px solid #FF6F00;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 220px;
+
+    .fit-eq {
+      font-family: monospace;
+      font-size: 1rem;
+      color: #E65100;
+    }
+  }
+
+  .plot-panel {
+    svg {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+  }
+}
+

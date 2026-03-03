@@ -1,0 +1,14 @@
+title: Physics 132L Lab Notebook
+description: Interactive laboratory notebook for Physics 132L
+contentDir: content
+theme:
+  primary: "#1565C0"
+  accent: "#FF6F00"
+social:
+  facebook:
+    page: "mathigon"
+  twitter:
+    handle: "mathigon_org"
+search:
+  enabled: true
+  popular: []
