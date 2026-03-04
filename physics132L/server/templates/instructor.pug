@@ -27,6 +27,9 @@ block main
             th(style="text-align: left; padding: 0.5rem;") Email
             th(style="text-align: left; padding: 0.5rem;") Modules
             th(style="text-align: right; padding: 0.5rem;") Progress
+            th(style="text-align: right; padding: 0.5rem;") Points
+            th(style="text-align: right; padding: 0.5rem;") Attempts
+            th(style="text-align: center; padding: 0.5rem;") Struggle
         tbody
           for s in students
             tr(style="border-bottom: 1px solid #eee;")
@@ -39,3 +42,12 @@ block main
               td(style="padding: 0.5rem; text-align: right;")
                 for c in s.courses
                   span(style="display: inline-block; margin-left: 0.5rem;")= c.progress + '%'
+              td(style="padding: 0.5rem; text-align: right;")
+                for c in s.courses
+                  span(style="display: inline-block; margin-left: 0.5rem;")= c.points != null ? c.points : '—'
+              td(style="padding: 0.5rem; text-align: right;")
+                for c in s.courses
+                  span(style="display: inline-block; margin-left: 0.5rem;")= c.attempts != null ? c.attempts : '—'
+              td(style="padding: 0.5rem; text-align: center;")
+                for c in s.courses
+                  span(style="display: inline-block; margin-left: 0.25rem;")= c.struggle ? 'Y' : '—'

@@ -24,6 +24,11 @@ block main
 
       .dashboard-sidebar: .sidebar-wrap
         .sidebar-panel
+          h2= __('Goals achieved')
+          p.goals-total
+            strong= typeof totalPoints !== 'undefined' ? totalPoints : 0
+            |  goals
+        .sidebar-panel
           block dashboard-sidebar
             h2= __('Weekly Stats')
             .stats-row

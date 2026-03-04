@@ -46,3 +46,31 @@
 ```
 
 Then in MongoDB run once: `db.users.dropIndex('oAuthTokens_1')` (in database `phys131`).
+
+---
+
+## 3. Per-goal attempts and struggle (Progress model + frontend)
+
+**Purpose:** Store attempt count per goal (e.g. blank wrong tries before success); instructor export shows Attempts and Struggle (Y if any goal had > 5 attempts).
+
+### 3a. Progress model — schema and merge
+
+**File:** `node_modules/@mathigon/studio/server/models/progress.ts`
+
+- **StepData type (line ~15):** Add `goalAttempts?: Record<string, number>` to the step type.
+- **ChangeData interface:** Add `goalAttempts?: Record<string, number>` to the step type in `steps`.
+- **ProgressBase steps:** Add `goalAttempts?: Record<string, number>` to the step map type.
+- **Schema `steps.of`:** Add `goalAttempts: Schema.Types.Mixed` next to `scores` and `data`.
+- **updateData:** In the loop over `changes.steps`, destructure `goalAttempts`; if present, merge into `stepData.goalAttempts` (e.g. `Object.assign({}, existing, goalAttempts)`).
+- **getSectionData** and **getJSON:** Include `goalAttempts` in each step object returned.
+
+### 3b. Frontend — send attempts when scoring
+
+**File:** `node_modules/@mathigon/studio/frontend/components/step/step.ts`
+
+- In `score(goal, goNext = true)`, add optional third parameter `attempts?: number`.
+- When calling `saveProgress`, if `attempts !== undefined`, include `goalAttempts: { [goal]: attempts }` in the step payload.
+
+**File:** `node_modules/@mathigon/studio/frontend/components/blank/blank.ts`
+
+- Where it calls `$step.score(goal)` (or `$step.score(this.solvedBlank ? this.solvedBlank.goal : goal)`), pass the blank’s attempt count as the third argument: `$step.score(..., true, this.attempts)`.

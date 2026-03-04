@@ -102,14 +102,14 @@ No new “struggle” storage is strictly required if you have per-goal attempts
 
 ## 5. Implementation order (suggested)
 
-| Step | What | Purpose |
+| Step | What | Status |
 |------|------|--------|
-| 1 | Fix course progress formula | Instructor (and student) see real %, not 100% after 2 problems. |
-| 2 | Add “points” (e.g. = goals achieved) and show on dashboard / export | Simple incentive and visibility. |
-| 3 | Add per-goal attempts (Option A) in Progress + frontend | Enables “how many trials” and struggle. |
-| 4 | Instructor view: show attempts per step/student, “struggle” flag or filter | See where students struggle. |
-| 5 | (Optional) Efficiency bonus or penalty in points | Finer incentive. |
-| 6 | (Optional) Interaction log (Option B) | Deeper analytics later. |
+| 1 | Fix course progress formula | Done (see PATCHES.md §1). |
+| 2 | Add “points” (e.g. = goals achieved) and show on dashboard / export | Done: dashboard “Goals achieved”, CSV/JSON Points column. |
+| 3 | Add per-goal attempts (Option A) in Progress + frontend | Done: goalAttempts in Progress; Blank sends attempts (see PATCHES.md §3). |
+| 4 | Instructor view: show attempts per step/student, “struggle” flag or filter | Done: instructor table + export have Points, Attempts, Struggle. |
+| 5 | (Optional) Efficiency bonus or penalty in points | Not done. |
+| 6 | (Optional) Interaction log (Option B) | Not done. |
 
 ---
 
