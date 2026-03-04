@@ -55,6 +55,85 @@ async function dashboardHandler(req: any, res: any) {
   });
 }
 
+/** Phase 2: Instructor-only — require user.type === 'teacher'. */
+function requireInstructor(req: any, res: any) {
+  if (!req.user) return res.redirect('/login');
+  if (req.user.type !== 'teacher') return res.status(403).send('Instructor access only.');
+}
+
+/** GET /instructor — list students with progress (read-only). */
+async function instructorList(req: any, res: any) {
+  requireInstructor(req, res);
+  if (res.headersSent) return;
+  const Progress = mongoose.connection.model('Progress') as any;
+  const User = mongoose.connection.model('User');
+  const userIds = await Progress.distinct('userId');
+  const users = userIds.length
+    ? await User.find({_id: {$in: userIds}}).select('id firstName lastName email updatedAt').lean().exec()
+    : [];
+  const progressDocs = await Progress.find({}).sort({updatedAt: -1}).lean().exec();
+  const byUser = new Map<string, {user: any; courses: any[]}>();
+  for (const u of users) {
+    byUser.set(u._id.toString(), {user: u, courses: []});
+  }
+  for (const p of progressDocs) {
+    const entry = byUser.get(p.userId);
+    if (entry) entry.courses.push({courseId: p.courseId, progress: p.progress || 0, updatedAt: p.updatedAt});
+  }
+  const students = Array.from(byUser.values()).sort(
+    (a, b) => new Date(b.user.updatedAt || 0).getTime() - new Date(a.user.updatedAt || 0).getTime()
+  );
+  res.render('instructor.pug', {students});
+}
+
+/** GET /instructor/export — CSV of student progress for grading. */
+async function instructorExport(req: any, res: any) {
+  requireInstructor(req, res);
+  if (res.headersSent) return;
+  const Progress = mongoose.connection.model('Progress') as any;
+  const User = mongoose.connection.model('User');
+  const userIds = await Progress.distinct('userId');
+  const users = userIds.length
+    ? await User.find({_id: {$in: userIds}}).select('id firstName lastName email').lean().exec()
+    : [];
+  const userMap = new Map(users.map((u: any) => [u._id.toString(), u]));
+  const progressDocs = await Progress.find({}).lean().exec();
+  const format = (req.query.format as string) || 'csv';
+  if (format === 'json') {
+    const rows = progressDocs.map((p: any) => {
+      const u = userMap.get(p.userId);
+      const steps: any = {};
+      if (p.steps && typeof p.steps.entries === 'function') {
+        for (const [k, v] of p.steps.entries()) steps[k] = {scores: v.scores, data: v.data ? JSON.parse(v.data) : undefined};
+      } else if (p.steps && typeof p.steps === 'object') {
+        for (const k of Object.keys(p.steps)) {
+          const v = p.steps[k];
+          steps[k] = {scores: v.scores || [], data: v.data ? (typeof v.data === 'string' ? JSON.parse(v.data) : v.data) : undefined};
+        }
+      }
+      return {
+        userId: p.userId,
+        email: u?.email,
+        name: u ? `${u.firstName || ''} ${u.lastName || ''}`.trim() : '',
+        courseId: p.courseId,
+        progress: p.progress || 0,
+        updatedAt: p.updatedAt,
+        steps,
+      };
+    });
+    return res.type('application/json').send(JSON.stringify(rows, null, 2));
+  }
+  const header = 'Email,Name,Course,Progress %,Last updated\n';
+  const rows = progressDocs.map((p: any) => {
+    const u = userMap.get(p.userId);
+    const name = u ? `${u.firstName || ''} ${u.lastName || ''}`.trim() : '';
+    const email = (u?.email || '').replace(/"/g, '""');
+    const updated = p.updatedAt ? new Date(p.updatedAt).toISOString() : '';
+    return `"${email}","${name}",${p.courseId},${p.progress || 0},"${updated}"`;
+  });
+  res.type('text/csv').attachment('progress-export.csv').send(header + rows.join('\n'));
+}
+
 const studio = new MathigonStudioApp()
   .setup({sessionSecret: 'physics132L-secret'})
   .get('/', (req, res) => res.render('home.pug', {courses: getValidCourses(req, res)}))
@@ -63,6 +142,8 @@ const studio = new MathigonStudioApp()
   .accounts()
   .use(mergeTmpUserProgress)
   .course({})
+  .get('/instructor', instructorList)
+  .get('/instructor/export', instructorExport)
   .errors()
   .listen(8080);
 
