@@ -1,6 +1,10 @@
-title: Physics 132L Lab Notebook
-description: Interactive laboratory notebook for Physics 132L
+title: PHYS-131
+siteName: PHYS-131
+description: Module-based course — Case Study, Lab, Homework by module.
 contentDir: content
+# Required for account emails and links (use your real domain in production)
+domain: localhost:8080
+
 theme:
   primary: "#1565C0"
   accent: "#FF6F00"
@@ -12,3 +16,12 @@ social:
 search:
   enabled: true
   popular: []
+
+# Phase 1: Student accounts — progress saved to MongoDB
+accounts:
+  enabled: true
+  mongoServer: mongodb://localhost:27017/phys131
+  # Replace with your institution URLs before going live
+  privacyPolicy: https://www.example.com/privacy
+  termsOfUse: https://www.example.com/terms
+  supportEmail: instructor@example.com

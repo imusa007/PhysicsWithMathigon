@@ -2,6 +2,7 @@ extends ../../node_modules/@mathigon/studio/server/templates/_layout.pug
 
 block main
   .container.narrow
-    h1 Available Labs
+    h1 PHYS-131 — Modules
+    p Case Study, Lab, and Homework by module.
     for c in courses || []
       +course(c)

@@ -2,8 +2,7 @@ extends ../../node_modules/@mathigon/studio/server/templates/_layout.pug
 
 block main
   .container.narrow
-    h1 Physics 132L Lab Notebook
-    p Welcome! Select a lab below to get started.
+    h1 PHYS-131
+    p Select a module to open Case Study, Lab, and Homework.
     for c in courses || []
       +course(c)
-    a(href="/courses") View All Labs
