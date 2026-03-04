@@ -29,6 +29,16 @@ Magnitude ≈ **${round(sqrt(vx\*vx + vy\*vy), 2)}**
 
 ---
 
+> section: addition
+> id: addition-quiz
+> goals: blank-0 blank-1
+
+**Practice:** What is (2,3) + (8,7)? Enter the two components.
+
+**(2,3) + (8,7) = ( [[10]], [[10]] )**
+
+---
+
 ## Vector Subtraction
 
 > section: subtraction
