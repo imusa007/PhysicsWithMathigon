@@ -51,7 +51,7 @@ Then in MongoDB run once: `db.users.dropIndex('oAuthTokens_1')` (in database `ph
 
 ## 3. Per-goal attempts and struggle (Progress model + frontend)
 
-**Purpose:** Store attempt count per goal (e.g. blank wrong tries before success); instructor export shows Attempts and Struggle (Y if any goal had > 5 attempts).
+**Purpose:** Store attempt count per goal (e.g. blank wrong tries before success); instructor export shows Attempts and Struggle (Y if any goal had > 3 attempts; threshold in app.ts `STRUGGLE_THRESHOLD`).
 
 ### 3a. Progress model — schema and merge
 

@@ -21,7 +21,9 @@ function pointsForProgress(p: any): number {
   return n;
 }
 
-/** Total attempt count and struggle (any goal > 5 attempts) for a progress doc. */
+/** Total attempt count and struggle (any goal with > 3 attempts = struggle). */
+const STRUGGLE_THRESHOLD = 3;
+
 function attemptsAndStruggle(p: any): {attempts: number; struggle: boolean} {
   const steps = p.steps;
   let attempts = 0;
@@ -33,7 +35,7 @@ function attemptsAndStruggle(p: any): {attempts: number; struggle: boolean} {
     if (ga && typeof ga === 'object') {
       for (const count of Object.values(ga) as number[]) {
         attempts += count ?? 0;
-        if ((count ?? 0) > 5) struggle = true;
+        if ((count ?? 0) > STRUGGLE_THRESHOLD) struggle = true;
       }
     }
   }

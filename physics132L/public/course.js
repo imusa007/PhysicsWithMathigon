@@ -6479,7 +6479,7 @@
       if ((_a4 = userData == null ? void 0 : userData.scores) == null ? void 0 : _a4.includes(goal)) this.solve(true);
       this.one("valid", () => {
         $step.addHint("correct");
-        $step.score(this.solvedBlank ? this.solvedBlank.goal : goal);
+        $step.score(this.solvedBlank ? this.solvedBlank.goal : goal, true, this.attempts);
       });
       this.on("invalid", (e) => $step.addHint(e.hint || "incorrect", { class: "incorrect" }));
     }
@@ -7446,14 +7446,16 @@
       return this.$course ? this.$course.isReady : true;
     }
     /** Manually score a goal for a step, and optionally move on to the next one. */
-    score(goal, goNext = true) {
+    score(goal, goNext = true, attempts) {
       if (this.scores.has(goal)) return;
       this.scores.add(goal);
       this.trigger("score-" + goal);
       this.trigger("score");
       if (this.$course) {
         this.$course.trigger("score");
-        this.$course.saveProgress({ steps: { [this.id]: { scores: [goal] } } });
+        const payload = { scores: [goal] };
+        if (attempts !== void 0) payload.goalAttempts = { [goal]: attempts };
+        this.$course.saveProgress({ steps: { [this.id]: payload } });
         this.$course.log("Step", "score", this.id + "/" + goal);
       }
       if (goNext && this.isReady && this.$course && this.$course.isReady) {
