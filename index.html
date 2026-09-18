@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paws & Match — Companion Placement Engine</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f5f1ea;
+      --card-bg: #ffffff;
+      --text: #2c251e;
+      --text-muted: #706555;
+      --border: #dcd3c4;
+      --accent: #059669;
+      --tag-bg: #eae3d2;
+      --alert-bg: #fef2f2;
+      --alert-border: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .logo {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .flow-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 12px 30px -8px rgba(50, 40, 30, 0.08);
+      width: 100%;
+      max-width: 780px;
+      padding: 2.2rem;
+      text-align: center;
+    }
+
+    .step-title {
+      font-size: 1.85rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      color: #1f1a14;
+    }
+    .step-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 1.05rem;
+    }
+
+    /* Step 1: Species Selection */
+    .species-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.2rem;
+    }
+    .species-card {
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 1.8rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fffdfa;
+    }
+    .species-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.12);
+    }
+    .species-icon { font-size: 3.5rem; margin-bottom: 0.5rem; }
+    .species-name { font-size: 1.2rem; font-weight: 700; }
+
+    /* Sliders */
+    .slider-wrapper {
+      margin: 2rem 0;
+      text-align: left;
+    }
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      font-weight: 500;
+      margin-top: 0.8rem;
+    }
+    .range-input {
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: #e2dbce;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+    }
+    .value-pill {
+      display: inline-block;
+      background: #eef2ff;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 1.25rem;
+      padding: 0.3rem 1.3rem;
+      border-radius: 30px;
+      margin-bottom: 1.2rem;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.85rem 2.2rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--primary-hover); }
+
+    .browse-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: var(--primary);
+      font-weight: 600;
+      text-underline-offset: 3px;
+    }
+    .browse-heading {
+      margin: 2rem 0 1rem;
+      font-size: 1.3rem;
+    }
+
+    /* Cards */
+    .results-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      text-align: left;
+    }
+    .pet-card {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fffdf9;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .pet-img-box {
+      background: #ede6d8;
+      border-right: 1.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .pet-img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .fallback-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.2rem;
+      text-align: center;
+    }
+    .photo-plate-tag {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+
+    .pet-info {
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .pet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid var(--border);
+      padding-bottom: 0.4rem;
+    }
+    .name-id-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+    }
+    .pet-name { font-size: 1.35rem; font-weight: 800; color: #1f1811; }
+    .pet-id-tag { font-family: monospace; font-weight: 700; color: #991b1b; font-size: 0.85rem; }
+    .match-badge {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+    }
+
+    .meta-line { font-size: 0.86rem; color: var(--text-muted); }
+    .meta-line strong { color: var(--text); }
+    .story-invitation {
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.2rem;
+      background: #eef2ff;
+      border-radius: 12px;
+      text-align: left;
+      line-height: 1.5;
+    }
+    .story-invitation p { margin: 0.3rem 0; }
+    .story-invitation small { color: var(--text-muted); }
+    .pet-story { margin: 0.4rem 0; }
+    .pet-story h3 { font-size: 0.95rem; margin-bottom: 0.35rem; }
+    .pet-story p { font-size: 0.95rem; line-height: 1.6; }
+    .tag-row { flex-wrap: wrap; }
+    @media (max-width: 600px) {
+      .flow-container { padding: 1.3rem; }
+      .pet-card { grid-template-columns: 1fr; }
+      .pet-img-box { border-right: none; border-bottom: 1.5px solid var(--border); }
+      .pet-img-box img { max-height: 240px; }
+      .pet-header, .name-id-wrap { flex-wrap: wrap; gap: 0.5rem; }
+    }
+
+    .bio-text { font-size: 0.92rem; line-height: 1.35; color: #2b2319; }
+    .quirk-quote {
+      background: #f7f2e7;
+      border-left: 3px solid #8c7553;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.84rem;
+      font-style: italic;
+      color: #3b2e20;
+    }
+    .warden-notes { font-size: 0.82rem; color: #4b3f33; line-height: 1.35; }
+
+    .tag-row {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px dashed var(--border);
+    }
+    .tag {
+      font-size: 0.75rem;
+      background: var(--tag-bg);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      color: #4a3d2e;
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    .reset-btn {
+      margin-top: 1.5rem;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .reset-btn:hover { background: #ede6d8; color: var(--text); }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <span>🐾</span> Paws & Match
+    </div>
+    <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+      Shelter Intake & Vector Placement Engine
+    </span>
+  </header>
+
+  <main>
+    <div class="flow-container">
+
+      <!-- STEP 1: SPECIES SELECTION -->
+      <div id="step-1">
+        <h1 class="step-title">Who are you looking to meet?</h1>
+        <p class="step-subtitle">Select the species ledger you wish to inspect.</p>
+        <div class="species-grid">
+          <div class="species-card" onclick="selectSpecies('Cat')">
+            <div class="species-icon">🐱</div>
+            <div class="species-name">Cat (Felis catus)</div>
+          </div>
+          <div class="species-card" onclick="selectSpecies('Dog')">
+            <div class="species-icon">🐶</div>
+            <div class="species-name">Dog (Canis familiaris)</div>
+          </div>
+          <div class="species-card" onclick="selectSpecies('Bird')">
+            <div class="species-icon">🦜</div>
+            <div class="species-name">Bird (Aves domesticus)</div>
+          </div>
+          <div class="species-card" onclick="selectSpecies('Fish')">
+            <div class="species-icon">🐠</div>
+            <div class="species-name">Fish (Pisces aquaticus)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: ENERGY LEVEL -->
+      <div id="step-2" class="hidden">
+        <h1 class="step-title">Energy & Activity Level</h1>
+        <p class="step-subtitle">What lifestyle pace fits your home best?</p>
+
+        <div class="value-pill" id="disp-energy">5 / 10</div>
+        <div class="slider-wrapper">
+          <input type="range" class="range-input" id="inp-energy" min="1" max="10" value="5" oninput="updateVal('energy', this.value)" />
+          <div class="slider-labels">
+            <span>🛋️ 1 (Sluggish / Quiet)</span>
+            <span>⚡ 10 (Superman / Nonstop)</span>
+          </div>
+        </div>
+        <button class="btn" onclick="nextStep(3)">Continue</button>
+      </div>
+
+      <!-- STEP 3: AFFECTION LEVEL -->
+      <div id="step-3" class="hidden">
+        <h1 class="step-title">Affection & Clinginess</h1>
+        <p class="step-subtitle">Do you want an independent roommate or a velcro shadow?</p>
+        <div class="value-pill" id="disp-affection">5 / 10</div>
+        <div class="slider-wrapper">
+          <input type="range" class="range-input" id="inp-affection" min="1" max="10" value="5" oninput="updateVal('affection', this.value)" />
+          <div class="slider-labels">
+            <span>🌿 1 (Total Introvert)</span>
+            <span>🫂 10 (Velcro Cuddler)</span>
+          </div>
+        </div>
+        <button class="btn" onclick="nextStep(4)">Continue</button>
+      </div>
+
+      <!-- STEP 4: VOCALNESS / NOISE -->
+      <div id="step-4" class="hidden">
+        <h1 class="step-title">Sound & Vocalness</h1>
+        <p class="step-subtitle">How chatty would you like your companion to be?</p>
+        <div class="value-pill" id="disp-vocal">5 / 10</div>
+        <div class="slider-wrapper">
+          <input type="range" class="range-input" id="inp-vocal" min="1" max="10" value="5" oninput="updateVal('vocal', this.value)" />
+          <div class="slider-labels">
+            <span>🤫 1 (Dead Silent)</span>
+            <span>📢 10 (Full Conversation)</span>
+          </div>
+        </div>
+        <button class="btn" onclick="computeAndShowResults()">Search Shelter Registry</button>
+      </div>
+
+      <!-- STEP 5: RESULTS -->
+      <div id="step-5" class="hidden">
+        <h1 class="step-title">Top 3 Companion Matches</h1>
+        <p class="step-subtitle">The companions that best fit your preferences.</p>
+
+        <div class="story-invitation">
+          <strong>A match score is a starting point.</strong>
+          <p>Read their stories, then browse the others. Who would you choose to meet, and what drew you to them?</p>
+          <small>Fictional pet profiles created for classroom discussion.</small>
+        </div>
+
+        <div class="results-wrapper" id="results-container">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <a href="#browse-section" class="browse-link" id="browse-link" aria-expanded="false" aria-controls="browse-section" onclick="toggleBrowse(event)">Browse manually</a>
+        <section id="browse-section" class="hidden" aria-labelledby="browse-heading">
+          <h2 class="browse-heading" id="browse-heading"></h2>
+          <p class="step-subtitle">Your top three suggestions stay above. More companions are listed below in alphabetical order.</p>
+          <div class="results-wrapper" id="browse-container"></div>
+        </section>
+
+        <br />
+        <button class="btn reset-btn" onclick="resetApp()">Inspect Another Category</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const userProfile = {
+      species: null,
+      energy: 5,
+      affection: 5,
+      vocal: 5
+    };
+
+    const EMOJIS = { Cat: "🐱", Dog: "🐶", Bird: "🦜", Fish: "🐠" };
+
+    // Fictional classroom profiles; stories do not affect numerical matching.
+    const database = [
+      // === CATS ===
+      { species: "Cat", id: "FEL-01", numId: 1, name: "Barnaby", breed: "Senior Domestic Longhair", age: "11 Years", intake: "Surrendered from a quiet library residence", temperament: "Completely motionless philosopher, zen master", quirk: "Claims the bookmark by resting one paw on it. Apparently you need his permission to finish the chapter.", notes: "A peaceful room, a comfortable bed, and company that respects his space help him settle.", story: "Barnaby used to keep a retired librarian company while she repaired old books. At the shelter, a volunteer opened a novel beside his bed and he settled nearby; now their quiet reading hour is the best part of both their afternoons.", vector: [1, 1, 1] },
+      { species: "Cat", id: "FEL-04", numId: 4, name: "Milo the Tornado", breed: "Bengal Mix", age: "1 Year", intake: "Rescued from an industrial turbine warehouse", temperament: "Unstoppable chaos agent, screaming parkour master", quirk: "Runs a victory lap after catching his toy, carrying it proudly and loudly narrating the highlights.", notes: "Needs plenty of active play, climbing opportunities, and attentive company.", story: "Warehouse workers knew Milo as the little blur that appeared during their breaks. His foster carer discovered that after an evening of games, this whirlwind would press close and purr; all that exuberance came with an equally enthusiastic need for company.", vector: [9, 9, 9] },
+      { species: "Cat", id: "FEL-16", numId: 16, name: "Ziggy", breed: "Grey Tuxedo", age: "3 Years", intake: "Shelter transfer", temperament: "Middle-of-the-road standard housecat", quirk: "Schedules a brief evening zoom, then returns to his cushion as if a sensible amount of exercise has been officially completed.", notes: "Enjoys a steady routine with time for play, rest, and friendly company.", story: "Ziggy arrived from another shelter with no dramatic introduction, just a small chirp from his carrier. His foster family began noticing the ordinary things they loved: a welcome at the door, a short game after dinner, a warm presence beside them.", vector: [5, 5, 5] },
+      
+      { species: "Cat", id: "FEL-02", numId: 2, name: "Luna", breed: "Russian Blue Mix", age: "2 Years", intake: "Found nesting in an antique bookshop courtyard", temperament: "Silent acrobat, moonlight zoomer", quirk: "Sits on the one notebook you are using, even when three empty ones are offered. Her editorial standards are mysterious.", notes: "Hypnotic green eyes. Does not like sudden vacuums but loves feather wands.", story: "The bookshop staff first noticed Luna watching them unpack deliveries from the courtyard wall. She took weeks to come inside, but the evening she curled up beside the receipts, they knew the shop had acquired a very quiet assistant.", vector: [6, 6, 1] },
+      { species: "Cat", id: "FEL-03", numId: 3, name: "Cleo", breed: "Calico", age: "6 Years", intake: "Transferred from county shelter", temperament: "Regal, opinionated, deeply loyal", quirk: "Announces breakfast with a series of musical trills, then looks at the bowl as though she has already submitted three complaints.", notes: "She chooses her person deliberately. Once chosen, she will sleep on your feet every night.", story: "Cleo arrived with a worn blanket and little patience for introductions. A volunteer began sitting nearby without asking for attention; one evening Cleo climbed onto the blanket beside her, turning an ordinary shift into a small celebration.", vector: [4, 7, 7] },
+      { species: "Cat", id: "FEL-05", numId: 5, name: "Oreo", breed: "Longhair Bicolor", age: "8 Years (Senior)", intake: "Long-time owner passed away peacefully", temperament: "Dignified gentleman, heating-pad connoisseur", quirk: "Follows a moving sunbeam across the room in tiny stages, like a very fluffy clock that occasionally needs a snack.", notes: "Low maintenance, high companionship. Perfect reading buddy for quiet apartments.", story: "Oreo came with his late owner's knitted throw and a familiar evening routine. His foster carer leaves space beside her chair, and he fills it every night; sharing a quiet room has become their way of starting again.", vector: [2, 9, 3] },
+      { species: "Cat", id: "FEL-06", numId: 6, name: "Simba", breed: "Maine Coon Mix", age: "3 Years", intake: "Stray intake from wooded rural trail", temperament: "Gentle giant, water watcher", quirk: "Watches a dripping tap with the solemn concentration of a scientist whose experiment is almost certainly about to get his nose wet.", notes: "Huge paws, tiny chirpy meow. Gets along famously with laid-back dogs.", story: "A trail walker found Simba waiting near the same bench for several mornings. At his foster home he was wary of the hallway, until a calm old dog lay down nearby; now the two take their afternoon naps within paw's reach.", vector: [5, 8, 4] },
+      { species: "Cat", id: "FEL-07", numId: 7, name: "Mochi", breed: "Japanese Bobtail Mix", age: "1.5 Years", intake: "Born in foster care", temperament: "Playful, inquisitive, bouncy", quirk: "Returns a crumpled paper ball, drops it just beyond your reach, and waits. She considers this excellent training for humans.", notes: "Very social; greets everyone at the door with a high-tailed happy trot.", story: "Mochi grew up in a foster home where someone was always doing homework at the kitchen table. She learned that dropped paper meant playtime, and now brings her toys over whenever a person sits down to concentrate.", vector: [7, 7, 5] },
+      { species: "Cat", id: "FEL-08", numId: 8, name: "Shadow", breed: "Bombay Cat (All Black)", age: "5 Years", intake: "Found outside community library", temperament: "Stealthy snuggler, velvet shadow", quirk: "Appears beside your elbow so silently that the first sign of his arrival is your hand being politely redirected toward his forehead.", notes: "Extremely shiny coat. Overlooked because of dark fur superstitions.", story: "Shadow waited outside a library while readers came and went, easily missed against the dark doorway. The first volunteer who sat at his level received a slow headbutt; his introductions are quiet, but he makes them count.", vector: [4, 9, 2] },
+      { species: "Cat", id: "FEL-09", numId: 9, name: "Penny", breed: "Tortoiseshell", age: "3.5 Years", intake: "Relinquished by college student moving dorms", temperament: "Fiery intellect, high boundaries, tender heart", quirk: "Inspects your glasses before approving forehead scratches. No one knows whether she is checking the prescription or your credentials.", notes: "Has signature 'tortitude'. Respect her space and she will reward you with deep devotion.", story: "Penny's student owner sent a handwritten page explaining her favorite games when a dorm move separated them. Her foster carer followed those small rituals, and Penny gradually began joining study sessions again, on her own terms.", vector: [5, 5, 6] },
+      { species: "Cat", id: "FEL-10", numId: 10, name: "Jasper", breed: "Silver Tabby", age: "7 Years", intake: "Shelter rescue intake", temperament: "Contemplative philosopher", quirk: "Stares at an empty corner, then looks back at you. Whatever meeting is happening there, you have apparently not been invited.", notes: "Needs gentle handling. Loves cardboard scratchers and dried catnip.", story: "Jasper spent his first shelter days tucked behind his bed, watching everything. A volunteer brought a cardboard scratcher and waited; his first little stretch outside his hiding place felt more exciting than any grand entrance.", vector: [3, 6, 2] },
+      { species: "Cat", id: "FEL-11", numId: 11, name: "Nova", breed: "Siamese Point Mix", age: "2 Years", intake: "Found wandering neighborhood garden", temperament: "Expressive conversationalist, passionate", quirk: "Replies to questions with such convincing timing that volunteers catch themselves asking follow-up questions.", notes: "If you want a buddy you can talk to about your day, Nova is the one.", story: "A gardener found Nova among the tomato plants, answering every call with an emphatic meow. At the shelter she became a favorite with the closing team, providing running commentary while they cleaned and telling them when it was time to go home.", vector: [7, 8, 9] },
+      { species: "Cat", id: "FEL-12", numId: 12, name: "Waffles", breed: "Buff Ginger Shorthair", age: "4 Years", intake: "Neighborhood stray taken in during winter frost", temperament: "Mellow, round, food-motivated", quirk: "Tucks every paw away and becomes a perfect loaf. Only the ears reveal that dinner is being monitored.", notes: "Very forgiving, loves kids, very calm when being carried around like a sack of flour.", story: "Waffles appeared on a neighbor's doorstep during a frosty week and stayed near the warm light. His foster family gave him a blanket by their dinner table; now he settles there each evening, included without needing to be the center of attention.", vector: [3, 8, 3] },
+      { species: "Cat", id: "FEL-13", numId: 13, name: "Spike", breed: "Domestic Shorthair (Tricolor)", age: "10 Months", intake: "Litter rescue", temperament: "Curious investigator, parkour enthusiast", quirk: "Pauses halfway through a climbing adventure to look back, making sure someone has witnessed his athletic achievement.", notes: "Needs cat trees and high vertical spaces. Very smart and eager to learn tricks.", story: "Spike was the kitten who reached every new toy before his littermates. His foster carer began turning that curiosity into little games, and the first time he followed a target onto his climbing perch, she cheered loud enough to startle herself.", vector: [9, 6, 5] },
+      { species: "Cat", id: "FEL-14", numId: 14, name: "Kona", breed: "Havana Brown Mix", age: "5 Years", intake: "Owner allergic", temperament: "Warm, chocolate-toned quiet sweetheart", quirk: "Leans toward a warm mug for a cheek rub, as though every tea break includes a tiny spa appointment.", notes: "Thrives in a serene household with sunlit windows and classical music.", story: "Kona's owner loved him but could no longer share a home with him because of allergies. He arrived with his favorite cushion; now his foster carer puts it beside her morning tea, giving an unfamiliar house one reassuringly familiar corner.", vector: [3, 8, 2] },
+      { species: "Cat", id: "FEL-15", numId: 15, name: "Peanut", breed: "Small Dilute Calico", age: "1.5 Years", intake: "Found by barn owner", temperament: "Petite darling, feather chaser", quirk: "Chooses the smallest slipper available and curls inside it with the confidence of someone who booked the luxury suite.", notes: "Shy around loud noises, but melts immediately when offered churu treats.", story: "A barn owner spotted Peanut curled up where the work boots were stored. She still takes time to trust a new room, but her foster carer knew progress had happened when a pair of slippers acquired a sleeping passenger.", vector: [5, 7, 3] },
+      { species: "Cat", id: "FEL-17", numId: 17, name: "Archie", breed: "British Shorthair Mix", age: "6 Years", intake: "Owner downsized housing", temperament: "Chubby cheeks, stoic, dignified", quirk: "Walks toward treats at a stately pace. Even a particularly good snack cannot be allowed to damage his dignity.", notes: "A calming presence. He will quietly anchor himself beside your desk during work hours.", story: "Archie's owner had to move to a smaller home and sent along his desk-side bed. At the shelter, volunteers placed it beside the paperwork table; Archie resumed his old job of keeping someone company while nothing much happened.", vector: [2, 6, 1] },
+      { species: "Cat", id: "FEL-18", numId: 18, name: "Gus", breed: "Fluffy Black Domestic", age: "4 Years", intake: "Found behind neighborhood hardware store", temperament: "Velcro cuddlebug, purr-engine", quirk: "Taps your sleeve when ear scratches stop, like a customer gently reminding you that the service was not quite finished.", notes: "Big boy with big feelings. Loves brushing sessions and combing.", story: "The hardware shop workers fed Gus behind the building before finding him a foster home. He was fascinated by his first brushing session, and now the sight of the comb brings him trotting over, ready for his favorite shared ritual.", vector: [4, 10, 4] },
+      { species: "Cat", id: "FEL-19", numId: 19, name: "Pepper", breed: "Torbie (Tortie Tabby)", age: "2 Years", intake: "Stray kitten rescued by mail carrier", temperament: "Spunky, independent, bird watcher", quirk: "Chatters at a fly on the other side of the glass, then checks whether you have also noticed this deeply important development.", notes: "Terrific mouser potential; loves interactive wand toys.", story: "Pepper's rescuer was a mail carrier who kept hearing a kitten near the same garden gate. In foster care she found a sunny window and a person willing to play; those two things turned a cautious arrival into an eager little explorer.", vector: [7, 5, 5] },
+      { species: "Cat", id: "FEL-20", numId: 20, name: "Copper", breed: "Abyssinian Mix", age: "3 Years", intake: "Shelter surrender", temperament: "High energy explorer, agile", quirk: "Inspects a new shelf before inspecting a new toy. He believes the best part of any gift is the higher vantage point.", notes: "Very intelligent, can be clicker trained to high-five and sit.", story: "Copper came to the shelter with more curiosity than places to put it. A volunteer built a little training routine around his climbing games; watching him offer a careful high-five made his busy afternoons feel like a conversation.", vector: [8, 6, 4] },
+      { species: "Cat", id: "FEL-21", numId: 21, name: "Loki", breed: "Black & White Masked", age: "1 Year", intake: "Born to stray mother in garage", temperament: "Mischievous trickster, joyful", quirk: "Keeps a collection of toy mice under the rug, then acts astonished when housekeeping uncovers his secret department.", notes: "Needs interactive enrichment to keep his clever brain busy.", story: "Born in a garage, Loki learned early that every corner could contain something interesting. His foster carer gives him daily search games, and he now arrives at playtime with the purposeful air of someone reporting for detective duty.", vector: [8, 7, 5] },
+      { species: "Cat", id: "FEL-22", numId: 22, name: "Bella", breed: "Ragdoll Mix", age: "5 Years", intake: "Owner moved to nursing care", temperament: "Limp ragdoll cuddle, docile", quirk: "Settles into an offered lap with a long sigh, as though she has finally found a chair that meets all her specifications.", notes: "Super gentle; must remain strictly indoors.", story: "Bella's owner moved into nursing care and sent a note about how she liked to sit during afternoon television. A foster volunteer recreated that quiet routine, and Bella began choosing the same spot beside her, one gentle afternoon at a time.", vector: [2, 10, 2] },
+      { species: "Cat", id: "FEL-23", numId: 23, name: "Sunny", breed: "Golden Tabby", age: "4 Years", intake: "Local humane intake", temperament: "Sunbeam lover, cheerful, easygoing", quirk: "Greets familiar people with a dramatic sideways flop, then waits for admiration before getting up again.", notes: "One of the easiest, friendliest cats in the shelter.", story: "Sunny was the first cat a nervous new volunteer met. When he rolled onto his back beside her chair, she laughed and relaxed; he has since become her favorite reminder that small welcomes can change the whole mood of a day.", vector: [4, 9, 3] },
+      { species: "Cat", id: "FEL-24", numId: 24, name: "Blue", breed: "Blue Smoke Shorthair", age: "7 Years", intake: "Found sheltering in greenhouse", temperament: "Quiet shadow, serene companion", quirk: "Finds the one patch of dappled light and settles there, turning an ordinary window seat into a miniature jungle portrait.", notes: "Very tranquil. Perfect companion for quiet study or home office.", story: "Blue was found resting beneath the benches of a greenhouse. His foster carer gave him a quiet window corner, and he began joining her during evening reading; sometimes companionship looks like two creatures enjoying the same silence.", vector: [3, 7, 1] },
+      { species: "Cat", id: "FEL-25", numId: 25, name: "Zeus", breed: "Silver Classic Tabby", age: "3 Years", intake: "Found exploring university campus gardens", temperament: "Confident ruler of high shelves", quirk: "Surveys the room from above, then descends just long enough to remind everyone that management also appreciates chin scratches.", notes: "Affectionate on his terms, dignified, handsome, zero health issues.", story: "Campus gardeners recognized Zeus from his morning patrols among the flower beds. At the shelter he quickly chose a high perch; when a volunteer sits below to eat lunch, he comes down for a greeting before returning to his lookout.", vector: [5, 6, 3] },
+
+      // === DOGS ===
+      { species: "Dog", id: "CAN-04", numId: 29, name: "Barnaby the Slug", breed: "Bassett Hound Mix (Senior)", age: "10 Years", intake: "Relinquished by quiet estate", temperament: "Practically a throw rug, utter silence", quirk: "Checks whether you are staying seated before settling down. If the answer is yes, he considers the day's main plans confirmed.", notes: "Enjoys a gentle pace and a comfortable resting place; let him choose when to approach.", story: "Barnaby's former home was quiet, with a familiar rug beside the sitting-room chair. A shelter volunteer brought him a soft bed and began reading nearby; he did not rush over, but eventually chose to rest in the same patch of afternoon light.", vector: [1, 1, 1] },
+      { species: "Dog", id: "CAN-14", numId: 39, name: "Blizzard", breed: "Siberian Husky & Malinois", age: "1.5 Years", intake: "Escaped four 8-foot fences", temperament: "Olympic athlete, opera howler, extreme velcro", quirk: "Sings along with distant sirens, then checks your face as if expecting an honest review of the performance.", notes: "Needs an experienced, attentive home with structured activity and secure outdoor spaces.", story: "Blizzard arrived after a series of escapes from homes unprepared for his energy. His foster handler began giving him structured games and predictable company; after their first good training session, he rested nearby, still alert but finally sharing a pause.", vector: [9, 9, 9] },
+      { species: "Dog", id: "CAN-24", numId: 49, name: "Oliver", breed: "Beagle Mix", age: "5 Years", intake: "Shelter intake", temperament: "Balanced, mild-mannered family companion", quirk: "Stops at the same lamppost on every walk, apparently reading a neighborhood newsletter with a surprisingly lengthy comments section.", notes: "Enjoys walks, sniffing time, and a familiar daily routine.", story: "Oliver arrived without many details about his earlier life. A volunteer began walking him at the same time each afternoon, and soon he waited by the door; a simple shared routine gave this unfamiliar place one dependable happy moment.", vector: [5, 5, 5] },
+
+      { species: "Dog", id: "CAN-01", numId: 26, name: "Buster", breed: "Golden Retriever Mix", age: "3 Years", intake: "Surrendered due to family downsizing", temperament: "Endless wagging, eternal optimist, water lover", quirk: "Presents one shoe when you arrive, then waits proudly. It is a gift, a greeting, and possibly an extremely confusing house rule.", notes: "A total heart-melter. Loves every stranger he meets. Great with kids of all ages.", story: "Buster's family sent his favorite soft toy when their housing changed. His foster carer expected a shy first evening, but he met her at the door with a wag and an offering; welcoming people seems to be how he makes a place feel like home.", vector: [8, 10, 4] },
+      { species: "Dog", id: "CAN-02", numId: 27, name: "Daisy", breed: "Beagle & Foxhound", age: "4 Years", intake: "Stray intake from rural county road", temperament: "Nose to the ground, curious, soulful howler", quirk: "Can turn one fallen popcorn kernel into a lengthy investigation, complete with several return visits to the scene.", notes: "Needs fenced yard. When happy, sings a low melodious baying song.", story: "Daisy was found beside a rural road with her nose working harder than her tired legs. Her foster volunteer now takes her on slow sniffing walks; the route is short, but to Daisy it contains enough discoveries for an entire afternoon.", vector: [7, 8, 8] },
+      { species: "Dog", id: "CAN-03", numId: 28, name: "Roscoe", breed: "Pitbull Terrier Mix", age: "5 Years", intake: "Found tied outside community park during rain", temperament: "Couch walrus, gentle block-head, velvet hippo", quirk: "Stands beautifully still for his sweater, then parades around as if waiting for someone to mention how flattering the color is.", notes: "Completely gentle giant. Ignores other dogs on leash, wants belly scratches 24/7.", story: "A park visitor found Roscoe waiting in the rain and stayed with him until help arrived. In foster care he gravitated toward the sofa, and his first relaxed nap beside a person became the photograph everyone wanted to keep.", vector: [4, 10, 2] },
+      { species: "Dog", id: "CAN-05", numId: 30, name: "Scout", breed: "Australian Shepherd", age: "2 Years", intake: "Working farm rehome", temperament: "Workaholic genius, frisbee prodigy", quirk: "Rounds up scattered cushions into one pile and then looks pleased. Someone has to keep the indoor flock organized.", notes: "Needs daily mental puzzles and agility runs. Can learn 20 trick commands in a week.", story: "Scout's farm family wanted a home that could give his busy mind more individual attention. His foster carer started teaching him little jobs, and he now waits eagerly for their daily session; being understood seems to mean having something worthwhile to do.", vector: [10, 7, 6] },
+      { species: "Dog", id: "CAN-06", numId: 31, name: "Penny", breed: "Corgi Mix", age: "3 Years", intake: "Owner allergic", temperament: "Bossy sweetheart, low-riding speedster", quirk: "Falls asleep with her back legs stretched behind her, looking like a tiny superhero who has landed and forgotten to get up.", notes: "High alertness. Alerts when delivery vans arrive, but melts for cheese cubes.", story: "Penny's owner packed a favorite blanket when allergies made rehoming necessary. Her foster family learned that beneath the important announcements at the window was a dog who loved a predictable evening and a cozy place beside them.", vector: [7, 8, 7] },
+      { species: "Dog", id: "CAN-07", numId: 32, name: "Zeus", breed: "German Shepherd", age: "4 Years", intake: "Owner relocated for military deployment", temperament: "Loyal protector, stoic guardian, velcro shadow", quirk: "Uses your shoe as a chin rest. Moving your foot is apparently a decision that should involve a committee.", notes: "Impeccable leash manners. Requires an experienced handler who values deep canine loyalty.", story: "Zeus arrived with a note from his deployed owner explaining their evening walks. His foster handler follows the same unhurried route each day; at home, Zeus settles close enough to touch a shoe, keeping a small thread of routine intact.", vector: [7, 9, 5] },
+      { species: "Dog", id: "CAN-08", numId: 33, name: "Copper", breed: "Redbone Coonhound Mix", age: "5 Years", intake: "Stray intake from state park", temperament: "Sweet-natured, floppy-eared trail buddy", quirk: "Places his chin on the table edge and raises his eyebrows, delivering a silent performance titled Surely You Have Not Forgotten Me.", notes: "Loves hiking, car rides with windows cracked, and soft fleecy blankets.", story: "Copper was found near a state-park trailhead, greeting hikers as they returned. His foster carer first won his trust with a slow walk and a blanket afterward; now the sight of walking shoes makes his whole face brighten.", vector: [6, 9, 6] },
+      { species: "Dog", id: "CAN-09", numId: 34, name: "Bella", breed: "Labrador Retriever (Chocolate)", age: "1 Year", intake: "Surrendered - too energetic for apartment", temperament: "Bouncy joy, clumsy swimmer, stick collector", quirk: "Selects the biggest branch she can find, then looks genuinely puzzled when the doorway declines to cooperate.", notes: "Needs a yard and obedience basics. She has zero malice, just giant puppy love.", story: "Bella outgrew the life her apartment family could give her, but arrived with a well-loved fetch toy. Her foster volunteer is helping her practice patient greetings; every little success earns praise, and she looks delighted to have figured something out.", vector: [9, 9, 4] },
+      { species: "Dog", id: "CAN-10", numId: 35, name: "Gus", breed: "St. Bernard / Bernese Mix", age: "7 Years (Senior)", intake: "Shelter rescue intake", temperament: "Mountain teddy bear, drool artist", quirk: "Leans into your legs with complete faith that you have planned for the weight of an affectionate mountain.", notes: "Senior sweetheart. Needs orthopedic bed and short daily neighborhood ambles.", story: "Gus arrived with a greying muzzle and a preference for taking his time. A volunteer began joining him for short walks and long bench breaks; she says he has taught her to notice the neighborhood instead of simply getting through it.", vector: [2, 9, 3] },
+      { species: "Dog", id: "CAN-11", numId: 36, name: "Milo", breed: "Jack Russell Terrier", age: "2.5 Years", intake: "Found in suburban construction zone", temperament: "Pocket rocket, spring-loaded detective", quirk: "Bounces in place when his toy appears, apparently checking whether enthusiasm can be converted directly into altitude.", notes: "Fearless and hilarious. Thrives with interactive ball launcher toys.", story: "Construction workers noticed Milo investigating their lunch area and helped get him to safety. His foster carer channels that restless curiosity into search games; he tackles each one as though a tiny, very important case has just landed on his desk.", vector: [10, 6, 8] },
+      { species: "Dog", id: "CAN-12", numId: 37, name: "Archie", breed: "Border Collie Mix", age: "3 Years", intake: "Transferred from overcrowded shelter", temperament: "Focused, intense gaze, athletic companion", quirk: "Sets his ball at your feet and watches it with intense concentration. The next move is yours, and he has cleared his calendar.", notes: "Incredible runner. Ideal companion for cross-country runner or hiker.", story: "Archie transferred from a crowded shelter and took a while to relax enough to play. A volunteer rolled a ball gently across the grass; his first return with it began a daily routine that gave them both something to look forward to.", vector: [9, 7, 4] },
+      { species: "Dog", id: "CAN-13", numId: 38, name: "Kona", breed: "Boxer / Mastiff Mix", age: "4 Years", intake: "Surrendered by previous owner", temperament: "Wiggle-butt dancer, goofy champion", quirk: "Attempts to fit into a lap using optimism rather than geometry, then looks surprised when some of him remains on the floor.", notes: "Thinks he weighs 8 lbs and will try to climb into your armchair lap.", story: "Kona's first foster greeting was a cautious sniff followed by an enormous sideways wiggle. His carer now makes a little space beside her chair each evening; he approaches as if invited to the most wonderful event in the world.", vector: [6, 10, 4] },
+      { species: "Dog", id: "CAN-15", numId: 40, name: "Peanut", breed: "Chihuahua / Dachshund (Chiweenie)", age: "5 Years", intake: "Owner moving into assisted living", temperament: "Fierce guardian, pocket burrower", quirk: "Disappears beneath a blanket with only his nose visible. The rest of the dog is apparently classified information.", notes: "Once he trusts you, you are his whole universe. Very loyal lap dog.", story: "Peanut's owner moved into assisted living and sent his little blanket along with him. His foster carer lets him approach at his own pace; the first time his nose emerged beside her on the sofa, she stayed very still to protect that new trust.", vector: [4, 8, 6] },
+      { species: "Dog", id: "CAN-16", numId: 41, name: "Oreo", breed: "Dalmatian / Pointer Mix", age: "3 Years", intake: "Humane society rescue", temperament: "Sleek runner, spotted athlete", quirk: "Freezes into a magnificent pointing pose at a squirrel, then holds it long enough for everyone to appreciate the artistry.", notes: "High stamina, very clean dog, sheds minimally, loves jogging companions.", story: "Oreo arrived at the humane society unsure of all the new sounds. On quiet morning walks he began looking back at his volunteer between discoveries; those little check-ins turned exercise into the beginning of a partnership.", vector: [8, 6, 3] },
+      { species: "Dog", id: "CAN-17", numId: 42, name: "Shadow", breed: "Flat-Coated Retriever Mix", age: "4 Years", intake: "Stray pickup near fishing lake", temperament: "Shadow tracker, calm tail-thumper", quirk: "Thumps his tail when you say his name, even while the rest of him remains firmly committed to a nap.", notes: "Gentle mouth, retrieves eggs without cracking them. Extremely trustworthy.", story: "Shadow was found near a fishing lake, watching people pack up at dusk. His foster family gave him a bed near the kitchen, and he began answering every greeting with a soft tail thump; their ordinary conversations now have a gentle percussion track.", vector: [5, 9, 2] },
+      { species: "Dog", id: "CAN-18", numId: 43, name: "Jasper", breed: "Blue Heeler (Cattle Dog)", age: "3.5 Years", intake: "Ranch surplus rehome", temperament: "Alert scout, tactical genius", quirk: "Monitors passing cars from the window, then turns toward you as though the latest traffic report is ready for your signature.", notes: "Incredible stamina and loyalty. Bonds deeply to one primary human.", story: "Jasper came from a ranch where his days had been full of activity. His foster volunteer builds walks around little searches and training games; Jasper's serious expression softens whenever they finish a task together.", vector: [8, 6, 5] },
+      { species: "Dog", id: "CAN-19", numId: 44, name: "Waffles", breed: "Goldendoodle", age: "2 Years", intake: "Owner change in work travel schedule", temperament: "Teddy bear fluff, zero personal space", quirk: "Rests his front paws against you and pauses, offering a fluffy greeting that he clearly considers a proper embrace.", notes: "Requires regular grooming. Absolutely zero aggression, loves everyone.", story: "Waffles' owner began traveling too often to give him the company he loved. In foster care, the happiest moment of his day is hearing someone come home; he approaches with his whole body, eager to make an ordinary arrival feel celebrated.", vector: [7, 10, 3] },
+      { species: "Dog", id: "CAN-20", numId: 45, name: "Spike", breed: "French Bulldog Mix", age: "4 Years", intake: "Relinquished due to vet care costs", temperament: "Snoring potato, comical snort enthusiast", quirk: "Falls asleep during television and contributes a snoring soundtrack that never quite matches the dramatic scene.", notes: "Low stamina, hates heat, loves central air and being pushed in a wagon.", story: "Spike's family sought help when his care costs became more than they could manage. His foster carer keeps their afternoons gentle; on a cool evening, he enjoys a short outing and then settles nearby with the satisfaction of a day well spent.", vector: [2, 8, 4] },
+      { species: "Dog", id: "CAN-21", numId: 46, name: "Sunny", breed: "Cocker Spaniel", age: "6 Years", intake: "Senior surrender", temperament: "Velvet ears, gentle soul, tail never stops", quirk: "Offers one silky ear for brushing, then turns around to present the other. She is very fair about distributing attention.", notes: "Great family pet. Sweet temperament, calm demeanor indoors.", story: "Sunny arrived with a worn brush and a note saying that grooming time was her favorite. A volunteer kept that ritual going, talking softly while brushing her ears; now Sunny approaches whenever she sees the brush come out.", vector: [4, 9, 3] },
+      { species: "Dog", id: "CAN-22", numId: 47, name: "Blue", breed: "Weimaraner Mix", age: "3 Years", intake: "Shelter transfer", temperament: "Grey ghost, graceful gazelle, sensitive soul", quirk: "Nuzzles into a fleece jacket as though checking whether there is room for one whole dog inside the sleeve.", notes: "Deeply sensitive dog; thrives on positive reinforcement and quiet praise.", story: "Blue was quiet during his transfer and watched every unfamiliar movement. His foster carer began using soft praise and a steady routine; the day he leaned into her fleece sleeve, she realized their patient introductions had become a friendship.", vector: [7, 8, 4] },
+      { species: "Dog", id: "CAN-23", numId: 48, name: "Loki", breed: "Siberian Husky / Shepherd", age: "1.5 Years", intake: "Found roaming downtown alleys", temperament: "Escape artist, theatrical genius", quirk: "Checks a gate latch, then looks back at you. His face says maintenance inspection; everyone else suspects a travel proposal.", notes: "Requires secure yard locks! Highly intelligent, very affectionate pack animal.", story: "Loki was found roaming downtown, interested in every doorway and passerby. His foster handler gives that cleverness a job through puzzle games; solving one earns an exuberant greeting, as if they have completed a daring mission together.", vector: [9, 8, 8] },
+      { species: "Dog", id: "CAN-25", numId: 50, name: "Ziggy", breed: "Schnauzer / Terrier Mix", age: "4 Years", intake: "Found by postal carrier", temperament: "Mustachioed detective, spunky, loyal", quirk: "Tilts his head one way, then the other, as if your sentence contains two equally interesting theories.", notes: "Distinguished little beard. Great watchdog, very bonded to his primary caretaker.", story: "A postal carrier found Ziggy following the morning route at a respectful distance. In foster care he still listens closely when someone talks; his volunteer says explaining a difficult day to that tilted head somehow makes it easier.", vector: [6, 7, 5] },
+
+      // === BIRDS ===
+      { species: "Bird", id: "AV-21", numId: 71, name: "Nova", breed: "Diamond Dove", age: "3 Years", intake: "Estate sanctuary surrender", temperament: "Quiet, completely self-sufficient, still", quirk: "Holds a still, dignified pose until someone looks away, then quietly changes perches. She makes you doubt your observational skills.", notes: "Appreciates a calm environment and room to observe without pressure to interact.", story: "Nova came from a quiet sanctuary household and initially stayed on one familiar perch. Her foster carer learned to slow down and watch; a relaxed stretch or a small step toward the light became something lovely to notice, even without physical affection.", vector: [1, 1, 1] },
+      { species: "Bird", id: "AV-06", numId: 56, name: "Sunny", breed: "Sun Conure & Cockatoo", age: "4 Years", intake: "Relinquished due to neighbor complaints", temperament: "Screaming klaxon, 24/7 head cuddler, hyper-flying", quirk: "Makes an enthusiastic announcement, then tilts her head as though wondering why everyone has already noticed her.", notes: "Needs a household comfortable with loud calls and substantial daily attention.", story: "Sunny's previous home struggled with the noise and attention she needed. A foster volunteer began planning their days around play, rest, and company; understanding her big presence helped turn frustration into a more patient kind of connection.", vector: [9, 9, 9] },
+      { species: "Bird", id: "AV-01", numId: 51, name: "Barnaby", breed: "Cockatiel", age: "3 Years", intake: "Owner relocated", temperament: "Balanced gentle whistler", quirk: "Starts a breakfast whistle, pauses for your reply, then repeats it more slowly if your musical ability needs improvement.", notes: "Enjoys gentle interaction, enrichment, and time to rest on a familiar perch.", story: "Barnaby's owner left him with a familiar perch and the tune they whistled at breakfast. A volunteer tried the opening notes, and he answered; now each morning begins with the same small exchange in a new place.", vector: [5, 5, 5] },
+
+      { species: "Bird", id: "AV-02", numId: 52, name: "Luna", breed: "Green Cheek Conure", age: "2 Years", intake: "Surrendered by university student", temperament: "Velcro clown, pocket acrobat", quirk: "Hangs upside down to inspect a treat, making a simple snack look like the finale of a circus act.", notes: "Very cuddly; likes to tuck herself under your collar while you work on laptop.", story: "Luna came from a student home where evenings meant desk work and company. Her foster carer set up a nearby perch, and Luna began joining the quiet routine; even an ordinary email seems more entertaining with a little feathered observer.", vector: [8, 9, 6] },
+      { species: "Bird", id: "AV-03", numId: 53, name: "Cleo", breed: "Canary (Yellow Feather)", age: "4 Years", intake: "Shelter intake from avian estate", temperament: "Opera singer, peaceful soloist", quirk: "Times a burst of song to the running tap, as though the kitchen has accidentally hired a percussionist.", notes: "Not a handling bird, but fills the home with breathtaking melody every morning.", story: "Cleo arrived after an avian household could no longer keep her. Her foster volunteer noticed that morning chores drew out her song; now she opens the day with music while someone makes tea, offering companionship without needing a cuddle.", vector: [4, 2, 9] },
+      { species: "Bird", id: "AV-04", numId: 54, name: "Milo", breed: "Budgerigar (Sky Blue)", age: "1 Year", intake: "Found outside community church garden", temperament: "Chatty explorer, mirror admirer", quirk: "Talks earnestly to his yellow bell, pauses, and answers himself. The meeting minutes must be remarkable.", notes: "Very social, would do great in a pair or with someone home often.", story: "A church gardener spotted Milo among the bushes and helped bring him indoors. At the shelter he slowly began chattering during clean-up time; the room sounded different once his small voice joined the people working there.", vector: [7, 6, 7] },
+      { species: "Bird", id: "AV-05", numId: 55, name: "Zeus", breed: "African Grey Parrot (Congo)", age: "14 Years", intake: "Lifelong owner entered senior care", temperament: "Hyper-intelligent professor, observational mimic", quirk: "Reproduces a household beep, then watches everyone look around. He seems particularly pleased when his audience is completely confused.", notes: "Needs experienced avian guardian. Extremely smart; solves complex foraging puzzles.", story: "Zeus' lifelong owner entered senior care and sent a list of familiar phrases with him. A volunteer greeted him with one of them, and he leaned closer; his new friendships begin with patient listening and a little room for old habits.", vector: [6, 7, 9] },
+      { species: "Bird", id: "AV-07", numId: 57, name: "Pepper", breed: "Zebra Finch (Pair with Salt)", age: "2 Years", intake: "Surrendered pair", temperament: "Tiny beep machine, synchronized flier", quirk: "Exchange little meep sounds and hop to the next perch almost together, like a tiny duo practicing a very serious dance.", notes: "Hands-off pet. Joyful to watch build nests from shred paper in flight cage.", story: "Pepper and Salt arrived together, perched close while their carrier was moved. Their foster carer kept them together and learned to enjoy their small synchronized routines; some of the nicest companionship happens between animals while a person simply watches.", vector: [8, 1, 5] },
+      { species: "Bird", id: "AV-08", numId: 58, name: "Blue", breed: "Indian Ringneck Parakeet", age: "3 Years", intake: "Rescue intake", temperament: "Aristocratic conversationalist, observant", quirk: "Asks what you are doing just as you sit down, with the air of a polite supervisor who has noticed a suspicious break.", notes: "Independent bird. Enjoys wooden chew blocks and fresh bell pepper seeds.", story: "Blue took time to settle after arriving at the rescue. His volunteer began describing the chores while working nearby, and his inquisitive chatter gradually returned; they now have a morning conversation with very little agreement about who is interviewing whom.", vector: [6, 5, 8] },
+      { species: "Bird", id: "AV-09", numId: 59, name: "Jasper", breed: "Lovebird (Peach-faced)", age: "2 Years", intake: "Found stray on porch", temperament: "Feisty sweetheart, paper shredder", quirk: "Tucks paper strips into his feathers and struts around, appearing to transport supplies for an extremely ambitious building project.", notes: "Full of personality. Needs daily interaction or a companion bird.", story: "Jasper was found on a porch, where a neighbor patiently offered a safe place to land. In foster care, his busy paper-shredding afternoons became a favorite thing to watch; a small bird could make the whole room feel occupied and lively.", vector: [8, 7, 7] },
+      { species: "Bird", id: "AV-10", numId: 60, name: "Penny", breed: "Cockatiel (Lutino)", age: "4 Years", intake: "Humane society surrender", temperament: "Gentle sweetheart, head bow expert", quirk: "Lowers her head for a scratch, then shifts a fraction to the left. Apparently you have almost found the exact correct spot.", notes: "One of the quietest cockatiels we have seen. Very calm and sweet.", story: "Penny arrived with a gentle whistle and a favorite perch. Her foster volunteer waited for her to approach rather than reaching in; the first bowed head asking for attention felt like an invitation worth earning.", vector: [4, 9, 4] },
+      { species: "Bird", id: "AV-11", numId: 61, name: "Oreo", breed: "White-faced Cockatiel", age: "3 Years", intake: "Owner moved abroad", temperament: "Mellow whistler, curious scout", quirk: "Pauses with one foot raised before stepping toward a familiar hand, as if politely testing whether the elevator has arrived.", notes: "Great bird for beginners. Steps up on fingers reliably on command.", story: "Oreo's first days at the rescue were spent quietly watching the room. A volunteer began sitting nearby during lunch, and he started moving closer on his perch; their friendship grew through repeated, unhurried afternoons rather than a dramatic first meeting.", vector: [5, 7, 6] },
+      { species: "Bird", id: "AV-12", numId: 62, name: "Archie", breed: "Pionus Parrot (Blue-headed)", age: "8 Years", intake: "Avian rescue intake", temperament: "Calm aristocrat, sweet scented", quirk: "Fluffs his feathers at the start of their quiet hour, looking as though he has changed into very comfortable pajamas.", notes: "Known for quiet temperament compared to larger parrots. Excellent apartment bird.", story: "Archie came from a home where evening company was part of his routine. His foster carer keeps a chair near his perch, and he often settles there while she reads; she likes that a shared evening can be quiet and still feel full.", vector: [4, 7, 3] },
+      { species: "Bird", id: "AV-13", numId: 63, name: "Kona", breed: "Senegal Parrot", age: "6 Years", intake: "Surrendered", temperament: "Playful mechanic, bolt-turner", quirk: "Examines every toy fastener with his beak. He has appointed himself the engineering department and takes the position seriously.", notes: "Loves puzzle foraging boxes. Quiet chatter, very devoted to his chosen human.", story: "Kona arrived with a box of well-used puzzle toys. His foster volunteer first connected with him by hiding treats for him to find; now she enjoys watching him think, while he seems equally interested in inspecting her handiwork.", vector: [6, 8, 4] },
+      { species: "Bird", id: "AV-14", numId: 64, name: "Bella", breed: "Gouldian Finch", age: "1.5 Years", intake: "Hobbyist surrender", temperament: "Living rainbow, peaceful observer", quirk: "Approaches her bath, tests it delicately, then makes a spectacular splash. Elegance has its practical limits.", notes: "Stunning plumage (purple, green, yellow, turquoise). Peaceful visual joy.", story: "Bella's former keeper sent photographs of her favorite sunny perch. Her foster carer arranged a bright, quiet corner, and watching her explore it became a gentle morning ritual; beauty, patience, and a little familiarity helped bridge the change.", vector: [4, 1, 2] },
+      { species: "Bird", id: "AV-15", numId: 65, name: "Mochi", breed: "Society Finch Trio", age: "2 Years", intake: "Shelter intake", temperament: "Chirpy community, gentle roommates", quirk: "Shuffle places on their sleeping perch until everyone fits, conducting a nightly seating negotiation in soft little chirps.", notes: "Low maintenance. Soft whisper-like chirps that create relaxing background ambiance.", story: "Mochi's trio arrived as a little cluster, rarely more than a wing's length apart. Their foster family loves watching them settle together at dusk; the end of a busy day now includes three small birds making room for one another.", vector: [6, 1, 3] },
+      { species: "Bird", id: "AV-16", numId: 66, name: "Waffles", breed: "Quaker Parakeet (Monk Parrot)", age: "3 Years", intake: "Rescue intake", temperament: "Chatterbox builder, architecture enthusiast", quirk: "Rearranges a carefully placed twig immediately after you position it. Your help is appreciated, but your design choices need work.", notes: "Big personality in medium body. Says 'Good morning!' with clarity.", story: "Waffles arrived at the rescue full of opinions and interest in his surroundings. A volunteer began offering safe weaving materials, and his careful construction became their shared project; she supplies the materials, while he handles all artistic decisions.", vector: [7, 8, 7] },
+      { species: "Bird", id: "AV-17", numId: 67, name: "Spike", breed: "Eclectus Parrot (Male)", age: "7 Years", intake: "Avian rescue sanctuary", temperament: "Emerald philosopher, deliberate, gentle", quirk: "Studies a pomegranate seed before eating it, as though conducting quality control on a very tiny ruby.", notes: "Requires specialized fresh fruit/vegetable diet. Very gentle temperament.", story: "Spike came from an avian sanctuary and was slow to trust new hands. His foster volunteer began offering favorite foods from a respectful distance; gradually, their quiet snack ritual became a meeting they both looked forward to.", vector: [5, 7, 5] },
+      { species: "Bird", id: "AV-18", numId: 68, name: "Copper", breed: "Bourke's Parakeet", age: "2 Years", intake: "Shelter transfer", temperament: "Dusk singer, gentle pink pastel beauty", quirk: "Waits until twilight to contribute his little chiming notes, apparently preferring an audience that has finished rushing around.", notes: "Non-destructive, peaceful, ideal for people who work daytime hours.", story: "Copper arrived after a shelter transfer, subdued by the journey. His foster carer noticed his soft calls at dusk and began sitting nearby then; the gentle end-of-day routine gave them a way to meet at his own pace.", vector: [3, 5, 2] },
+      { species: "Bird", id: "AV-19", numId: 69, name: "Loki", breed: "Caique (White-bellied)", age: "4 Years", intake: "Surrendered due to high activity needs", temperament: "Surfer on blankets, bouncy acrobat", quirk: "Hops across a blanket in a series of determined little bounces, like someone taking the floor-is-lava rules very seriously.", notes: "Incredible energy! Needs wrestling toys, cardboard boxes, and floor playtime.", story: "Loki's previous family found his activity difficult to manage. In foster care, playtime became a planned part of every day; his volunteer discovered that learning his rhythm made the same boundless energy feel joyful rather than overwhelming.", vector: [10, 8, 8] },
+      { species: "Bird", id: "AV-20", numId: 70, name: "Gus", breed: "Pigeon (Tame Rescue)", age: "3 Years", intake: "Rehabilitated foundling", temperament: "Gentle cooer, hand feeder, calm companion", quirk: "Nods repeatedly at a favorite blue sweater. Whether this is fashion criticism or enthusiastic approval remains unresolved.", notes: "Pigeons make phenomenal, gentle, quiet indoor pets with pigeon pants (diapers).", story: "Gus was rehabilitated after being found as a young pigeon and grew comfortable around his carers. In his foster home, quiet visits and a familiar perch became the heart of the day; one volunteer says his gentle company changed how she saw city birds.", vector: [3, 9, 2] },
+      { species: "Bird", id: "AV-22", numId: 72, name: "Shadow", breed: "Parrotlet (Pacific Blue)", age: "2 Years", intake: "Humane shelter intake", temperament: "Big bird trapped in tiny body, fearless", quirk: "Puffs up to inspect a much larger toy, looking like a miniature official preparing to challenge a very large piece of paperwork.", notes: "Full parrot personality in 30 grams. Needs lots of toys and direct handling.", story: "Shadow arrived tiny enough to be overlooked and determined enough to prevent it. His foster volunteer introduced short training games; learning to respond to a cue gave this little bird a new way to make his presence known.", vector: [8, 7, 5] },
+      { species: "Bird", id: "AV-23", numId: 73, name: "Simba", breed: "Lory (Rainbow Lorikeet)", age: "5 Years", intake: "Specialty rescue intake", temperament: "Living kaleidoscope, high octane nectar-lover", quirk: "Inspects the spoon from both sides before taking a taste, apparently checking whether the restaurant has maintained its standards.", notes: "Requires liquid diet (nectar). Energetic, curious, and very affectionate.", story: "Simba came from a specialist rescue with a familiar feeding routine. His foster carer kept that routine steady while introducing new games; soon he was arriving eagerly at his feeding perch, turning careful daily work into a cheerful shared occasion.", vector: [9, 8, 8] },
+      { species: "Bird", id: "AV-24", numId: 74, name: "Peanut", breed: "Budgerigar (Yellow-Green)", age: "1.5 Years", intake: "Stray rescue", temperament: "Cheerful chatter, finger percher", quirk: "Says peekaboo while plainly visible on his perch. The hiding technique needs improvement, but the confidence is outstanding.", notes: "Friendly starter bird. Easy to handle and loves spinach leaves.", story: "A rescuer found Peanut outside and helped him settle into a warm, busy reception area. Hearing familiar voices drew out his chatter; his foster carer now enjoys a small greeting that makes even an ordinary morning feel noticed.", vector: [6, 6, 6] },
+      { species: "Bird", id: "AV-25", numId: 75, name: "Finley", breed: "Cockatoo (Goffin's)", age: "9 Years", intake: "Avian rescue surrender", temperament: "Velcro cuddle snuggler, escape mastermind", quirk: "Investigates a shoelace with great enthusiasm, as if solving a knot is the most urgent task on the day's agenda.", notes: "Needs immense love and time. Can live 40+ years. Wants to be with you always.", story: "Finley arrived from an avian rescue carrying years of familiar habits. His foster carer makes time for puzzles and company every day; building trust with such a clever bird has become a lesson in patience, consistency, and showing up.", vector: [8, 10, 8] },
+
+      // === FISH ===
+      { species: "Fish", id: "AQU-12", numId: 87, name: "Archie the Log", breed: "Bristlenose Pleco", age: "4 Years", intake: "Aquarist surrender", temperament: "Wood ornament mimic, practically immobile", quirk: "Settles against his driftwood so convincingly that visitors need a second look to decide which part of the ornament is the fish.", notes: "A sheltered resting area and familiar driftwood give him a place to retreat.", story: "Archie arrived with the piece of driftwood he had used in his old tank. His foster keeper kept it in the new setup; one evening a quiet movement from beneath it became a reminder that a familiar refuge can matter more than an impressive entrance.", vector: [1, 1, 1] },
+      { species: "Fish", id: "AQU-19", numId: 94, name: "Cyclone", breed: "Giant Tiger Barb Clan", age: "1 Year", intake: "Surrendered from aggressive tank", temperament: "Nonstop hydrodynamic tornado, splashing frenzy", quirk: "Sweep around the tank in a sudden group turn, making everyone else look as though they missed an important starting whistle.", notes: "An active group that needs a thoughtfully planned aquarium and suitable tankmates.", story: "Cyclone's lively group came from a tank where their activity had become difficult to accommodate. Their foster keeper planned a more suitable setup, and watching them move together helped her see exuberance as something to understand and make room for.", vector: [9, 9, 9] },
+      { species: "Fish", id: "AQU-08", numId: 83, name: "Penny", breed: "Rasbora Cohort", age: "1 Year", intake: "Surrendered", temperament: "Synchronized mellow schooler", quirk: "Turn together through the plants, leaving the impression that someone has quietly called a meeting on the other side of the tank.", notes: "Keep this group together and provide a stable aquarium with shelter to explore.", story: "Penny's school arrived together after their aquarium was surrendered. Their foster keeper watched them begin exploring in formation again; after a difficult week of her own, she found their steady movement unexpectedly comforting.", vector: [5, 5, 5] },
+
+      { species: "Fish", id: "AQU-01", numId: 76, name: "Barnaby", breed: "Halfmoon Betta (Royal Blue)", age: "1 Year", intake: "Donated from private aquarium", temperament: "Flamboyant dancer, solitary king", quirk: "Spreads his blue fins during a turn, then settles on his leaf like a performer taking a well-deserved break backstage.", notes: "Requires heated 5-gallon tank minimum. Loves resting on broad silk plant leaves.", story: "Barnaby's keeper donated him when a household aquarium had to close. His foster carer recreated a sheltered resting spot, and watching him glide out at breakfast became a daily pleasure; his small underwater world made the kitchen feel less hurried.", vector: [3, 2, 1] },
+      { species: "Fish", id: "AQU-02", numId: 77, name: "Bubbles", breed: "Oranda Goldfish (Red Cap)", age: "2 Years", intake: "School classroom tank downsizing", temperament: "Bumbly swimmer, feeding time champion", quirk: "Notices the food container across the room and begins an eager wiggle, making subtle hints entirely unnecessary.", notes: "Needs 20+ gallon cold water tank with heavy filtration. Loves thawed peas.", story: "Bubbles lived in a classroom tank where students took turns watching the morning feed. When the tank was retired, a foster volunteer kept the familiar schedule; she now understands why the children always wanted a few extra minutes beside the glass.", vector: [4, 3, 1] },
+      { species: "Fish", id: "AQU-03", numId: 78, name: "Cleo", breed: "Angelfish (Silver Zebra)", age: "2.5 Years", intake: "Surrendered community aquarium", temperament: "Graceful monarch, tall fin glider", quirk: "Turns sideways between the plants and seems to vanish, then reappears looking as though she has performed a very elegant magic trick.", notes: "Needs tall tank (30+ gal). Peaceful centerpiece fish for peaceful planted tanks.", story: "Cleo arrived when a community aquarium was rehomed. Her foster keeper added tall plants and noticed her exploring between them; sitting beside the tank after work became a ritual of watching, waiting, and letting the day grow quieter.", vector: [3, 1, 1] },
+      { species: "Fish", id: "AQU-04", numId: 79, name: "Nemo", breed: "Ocellaris Clownfish", age: "1.5 Years", intake: "Saltwater hobbyist rehome", temperament: "Bouncy wiggle-swimmer, curious", quirk: "Peeks out from his favorite shelter, retreats, then peeks again, apparently running a small underwater neighborhood watch.", notes: "Captive-bred saltwater species. Very hardy for marine tanks.", story: "Nemo's keeper sent him to a foster aquarium when a move ended their marine-tank hobby. The first evening he explored his new shelter while his carer watched; a tiny, curious resident made all the careful preparation feel suddenly personal.", vector: [5, 2, 1] },
+      { species: "Fish", id: "AQU-05", numId: 80, name: "Zeus", breed: "Crowntail Betta (Crimson)", age: "1 Year", intake: "Shelter rescue", temperament: "Fierce displayer, hammock napper", quirk: "Rests with his nose near the surface and his fins draped below, resembling a king who has declared the afternoon a public holiday.", notes: "Prefers gentle filter flow. Extremely vivid crimson rays.", story: "Zeus arrived at the rescue in need of a settled routine. His foster keeper prepared calm water and resting places, and began noticing how confidently he moved around them; earning that ordinary ease became more satisfying than any showy display.", vector: [3, 2, 1] },
+      { species: "Fish", id: "AQU-06", numId: 81, name: "Finley", breed: "Fancy Guppy Shoal (6 Fish)", age: "8 Months", intake: "Breeder surplus", temperament: "Rainbow kaleidoscope, kinetic motion", quirk: "Gather at the feeding corner like colorful guests who have arrived early and are pretending not to stare at the buffet.", notes: "Active, peaceful, beginner-friendly. Great in planted 10-gallon setup.", story: "Finley's six-fish shoal came from a breeder who could no longer keep every group. Their foster keeper began recognizing different colors and favorite routes; what first looked like a swirl of movement gradually became a little community worth knowing.", vector: [7, 2, 1] },
+      { species: "Fish", id: "AQU-07", numId: 82, name: "Shadow", breed: "Black Ghost Knifefish", age: "3 Years", intake: "Experienced aquarist relocation", temperament: "Nocturnal mystery, electric sense glider", quirk: "Backs into his shelter with effortless precision, as though demonstrating a parking maneuver everyone else has overcomplicated.", notes: "Needs 55+ gallon tank. Peaceful with fish too big to swallow. Fascinating creature.", story: "Shadow's experienced keeper had to relocate and sent detailed notes about his evening habits. His foster carer learned to watch during quieter hours; the first smooth glide from his hiding place rewarded days of patient, almost empty-looking observation.", vector: [4, 1, 1] },
+      { species: "Fish", id: "AQU-09", numId: 84, name: "Copper", breed: "Bronze Corydoras Catfish (Group of 4)", age: "2 Years", intake: "Aquarium rescue", temperament: "Snuffling vacuum cleaners, whiskered friends", quirk: "Patrol the sand shoulder to shoulder, resembling a whiskered cleaning crew with a lot of enthusiasm and no agreed route.", notes: "Needs fine sand substrate to protect delicate barbels. Hilariously endearing.", story: "Copper's four-fish group came from an aquarium rescue and settled into a sandy corner. Their foster keeper found herself watching their small searches each evening; caring about a creature did not require it to look up and recognize her.", vector: [5, 2, 1] },
+      { species: "Fish", id: "AQU-10", numId: 85, name: "Milo", breed: "Plakat Betta (Dragonscale)", age: "10 Months", intake: "Found abandoned in pet store closure", temperament: "Short-finned speedster, alert watcher", quirk: "Follows a slow movement outside the glass, then circles back as though checking whether his visitor intends to stay for the tour.", notes: "Short fins make him much faster and more athletic than long-finned bettas.", story: "Milo was rescued when a pet shop closed, along with the other fish still waiting inside. His foster keeper gave him a steady routine; seeing him explore his tank made an ordinary feeding visit feel like a small promise being kept.", vector: [5, 3, 1] },
+      { species: "Fish", id: "AQU-11", numId: 86, name: "Luna", breed: "Neon Tetra Cohort (10 Fish)", age: "1 Year", intake: "Shelter community tank surrender", temperament: "Electric blue living light ribbon", quirk: "Catch the light together as they turn, giving the tank a brief shimmer that looks suspiciously like a coordinated costume change.", notes: "Classic community fish. Peaceful, soothing, completely zen.", story: "Luna's ten-fish group came from a community tank that could no longer be maintained. Their foster keeper preserved their little shoal, and watching the blue ribbon of movement became a favorite pause between household chores.", vector: [5, 1, 1] },
+      { species: "Fish", id: "AQU-13", numId: 88, name: "Spike", breed: "Kuhli Loach Noodle Squad (5 Fish)", age: "1.5 Years", intake: "Aquarist surrender", temperament: "Substrate noodles, twilight squigglers", quirk: "Drape themselves across the plants like misplaced noodles, then disappear just as someone asks where all the noodles have gone.", notes: "Secretive by day, hilariously active at dusk. Great bottom dwellers.", story: "Spike's five loaches arrived tucked close together in their transport shelter. Their foster keeper learned to watch around dusk; the tank she once thought looked empty became full of little discoveries when she stopped expecting a performance on her schedule.", vector: [4, 1, 1] },
+      { species: "Fish", id: "AQU-14", numId: 89, name: "Oreo", breed: "Panda Corydoras (Group of 5)", age: "1 Year", intake: "Breeder surplus", temperament: "Miniature black-and-white bumblebees", quirk: "Set off along the front glass in a cheerful procession, with someone inevitably turning back as though a meeting point was missed.", notes: "Very peaceful, loves soft sand and sinking wafer pellets.", story: "Oreo's group came from a breeder's surplus tank and found a foster home together. Their keeper began recognizing their busy bottom-of-tank routines; an evening spent watching them made a small corner of the room feel surprisingly alive.", vector: [5, 2, 1] },
+      { species: "Fish", id: "AQU-15", numId: 90, name: "Kona", breed: "Chocolate Gourami", age: "2 Years", intake: "Specialty tank rehome", temperament: "Gentle, shy, chocolate-and-gold stripes", quirk: "Extends his delicate feelers while exploring, as if checking the dimensions before approving any new interior design.", notes: "Prefers dim lighting and botanicals (tannins). Very gentle soul.", story: "Kona came from a specialist aquarium whose keeper needed help rehoming its residents. The foster keeper recreated a sheltered corner and waited; the first calm exploration felt like a conversation conducted entirely through patience and observation.", vector: [2, 1, 1] },
+      { species: "Fish", id: "AQU-16", numId: 91, name: "Bella", breed: "Pearl Gourami", age: "2.5 Years", intake: "Shelter intake", temperament: "Lace-patterned royalty, calm surface browser", quirk: "Pauses beneath a broad leaf, then slides out with her feelers extended like someone cautiously opening the curtains on a new day.", notes: "One of the hardiest and most peaceful larger community fish.", story: "Bella arrived during a shelter intake and spent her early days close to cover. Her foster keeper kept things quiet and began noticing longer, calmer explorations; sharing a room with her offered a gentle reason to slow down and look carefully.", vector: [3, 2, 1] },
+      { species: "Fish", id: "AQU-17", numId: 92, name: "Sunny", breed: "Honey Gourami", age: "1.5 Years", intake: "Surrendered", temperament: "Golden droplet, peaceful grazer", quirk: "Investigates the same floating leaf from several angles, apparently convinced that today's inspection may reveal something yesterday's missed.", notes: "Small, peaceful, wonderful for 15-20 gallon planted tanks.", story: "Sunny's keeper surrendered the aquarium when life became too busy to maintain it. His foster carer created a steady daily routine, and his little appearances among the plants became a cheerful marker of time in an otherwise unpredictable week.", vector: [3, 2, 1] },
+      { species: "Fish", id: "AQU-18", numId: 93, name: "Blue", breed: "German Blue Ram (Pair)", age: "1 Year", intake: "Specialty fish rescue", temperament: "Jewel-toned cichlid couple, territory decorators", quirk: "Move grains of sand one by one, like neighbors who agree the patio needs work but have not yet agreed on the final design.", notes: "Needs warm, mature water (82°F). Gorgeous neon iridescent colors.", story: "Blue's pair arrived from a specialist rescue and soon began exploring the bottom of their new tank. Their foster keeper watches their tiny rearrangements while drinking evening tea; even a quiet aquarium can contain a surprisingly absorbing domestic drama.", vector: [4, 2, 1] },
+      { species: "Fish", id: "AQU-20", numId: 95, name: "Waffles", breed: "Dojo Loach (Weather Loach)", age: "3 Years", intake: "Coldwater tank rescue", temperament: "Puppy of the aquarium, weather barometer", quirk: "Pops out from a hiding place at exactly the moment you start looking for him, as if he has been enjoying the search all along.", notes: "Can be hand-fed sinking pellets; will gently nibble on fingers.", story: "Waffles came from a coldwater-tank rescue and soon began exploring every sheltered corner. His foster keeper enjoys his curious appearances during evening checks; the practical task of looking after an aquarium acquired an unexpectedly comic little companion.", vector: [6, 4, 1] },
+      { species: "Fish", id: "AQU-21", numId: 96, name: "Loki", breed: "Pea Puffer (Dwarf Puffer)", age: "1 Year", intake: "Surrendered by nano-tank keeper", temperament: "Micro-predator, bumblebee hovercraft", quirk: "Hovers in place, turns slightly, and stares, resembling a very small detective who has just noticed a flaw in your explanation.", notes: "Tiny size (1 inch), huge personality! Eats live pest snails enthusiastically.", story: "Loki's former keeper needed help finding a new home for the little puffer. His foster carer began watching his careful pauses among the plants; a fish barely larger than a fingernail could make the whole aquarium feel like a place of intrigue.", vector: [6, 3, 1] },
+      { species: "Fish", id: "AQU-22", numId: 97, name: "Gus", breed: "Black Moor Goldfish", age: "2 Years", intake: "Classroom relocation", temperament: "Velvet telescope eyes, gentle bumbling cruiser", quirk: "Examines a smooth pebble, moves on, then circles back. It may still be a pebble, but he believes in giving things a second chance.", notes: "Poor eyesight; feed in the same corner every day. Sweet-tempered.", story: "Gus moved when a classroom aquarium was relocated. His foster keeper kept feeding time in a familiar corner; watching him find his way there each day made the old students' handwritten farewell card feel like an introduction to someone worth knowing.", vector: [3, 3, 1] },
+      { species: "Fish", id: "AQU-23", numId: 98, name: "Nova", breed: "Galaxy Rasbora (Celestial Pearl Danios)", age: "1 Year", intake: "Planted tank club rescue", temperament: "Living starry night, miniature gems", quirk: "Disappear among the plants and reappear as a scatter of tiny bright specks, giving roll call a distinctly astronomical difficulty.", notes: "Thrives in heavily planted nano aquariums with moss and tiny shrimp.", story: "Nova's group came from a planted-tank club whose members helped find them a foster aquarium. Their keeper learned to notice the little flashes of color among the moss; a few minutes of observation became her favorite break from a busy screen-filled day.", vector: [5, 1, 1] },
+      { species: "Fish", id: "AQU-24", numId: 99, name: "Pepper", breed: "Otocinclus Catfish Troop (4 Fish)", age: "1.5 Years", intake: "Tank tear-down intake", temperament: "Dedicated leaf polishers, gentle glass skippers", quirk: "Rest flat against a leaf like tiny parked aircraft, then relocate while your attention is elsewhere. The airfield is always changing.", notes: "The gentlest fish in the world. Essential for peaceful planted tanks.", story: "Pepper's four-fish group was rehomed when an established aquarium had to be taken down. Their foster keeper watched them settle on the leaves and glass; they became a lesson in noticing quiet residents who are easy to overlook but still worth caring about.", vector: [4, 1, 1] },
+      { species: "Fish", id: "AQU-25", numId: 100, name: "Simba", breed: "Killifish (Gardneri)", age: "1 Year", intake: "Hobbyist surrender", temperament: "Vibrant jumper, jewel explorer", quirk: "Inspects a newly arranged plant and circles back for another look, apparently reserving judgment on your decorating skills.", notes: "Spectacular red and yellow spotted markings. Very hardy and inquisitive.", story: "Simba arrived from a hobbyist who wanted a stable new home for the fish they could no longer keep. His foster keeper enjoys his curious morning appearances; preparing the tank carefully became the start of a relationship built around observation rather than touch.", vector: [6, 2, 1] }
+    ];
+
+    function selectSpecies(species) {
+      userProfile.species = species;
+      nextStep(2);
+    }
+
+    function updateVal(field, val) {
+      userProfile[field] = parseInt(val, 10);
+      document.getElementById(`disp-${field}`).innerText = `${val} / 10`;
+    }
+
+    function nextStep(stepNum) {
+      [1, 2, 3, 4, 5].forEach(num => {
+        document.getElementById(`step-${num}`).classList.add('hidden');
+      });
+      document.getElementById(`step-${stepNum}`).classList.remove('hidden');
+    }
+
+    function resetApp() {
+      userProfile.species = null;
+      userProfile.energy = 5;
+      userProfile.affection = 5;
+      userProfile.vocal = 5;
+      ['energy', 'affection', 'vocal'].forEach(f => {
+        document.getElementById(`inp-${f}`).value = 5;
+        document.getElementById(`disp-${f}`).innerText = "5 / 10";
+      });
+      nextStep(1);
+    }
+
+    // Match preferences using Euclidean distance.
+    function euclideanDistance(u, v) {
+      return Math.sqrt(Math.pow(u[0]-v[0], 2) + Math.pow(u[1]-v[1], 2) + Math.pow(u[2]-v[2], 2));
+    }
+
+    function computeAndShowResults() {
+      const uVec = [userProfile.energy, userProfile.affection, userProfile.vocal];
+      const pool = database.filter(pet => pet.species === userProfile.species);
+      const maxEuclid = Math.sqrt(3 * Math.pow(9, 2));
+      const scored = pool.map(pet => {
+        const distance = euclideanDistance(uVec, pet.vector);
+        return {
+          ...pet,
+          distance,
+          matchRate: Math.max(0, (1 - distance / maxEuclid) * 100).toFixed(1)
+        };
+      });
+      scored.sort((a, b) => a.distance - b.distance || a.name.localeCompare(b.name));
+      const top3 = scored.slice(0, 3);
+      const topIds = new Set(top3.map(pet => pet.id));
+      const remaining = scored.filter(pet => !topIds.has(pet.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      renderPets(top3, 'results-container');
+      renderPets(remaining, 'browse-container');
+      const category = { Cat: 'cats', Dog: 'dogs', Bird: 'birds', Fish: 'fish' }[userProfile.species];
+      document.getElementById('browse-heading').innerText = `More ${category} (A–Z)`;
+      const browseLink = document.getElementById('browse-link');
+      browseLink.innerText = `Browse all ${category} manually`;
+      browseLink.setAttribute('aria-expanded', 'false');
+      document.getElementById('browse-section').classList.add('hidden');
+      nextStep(5);
+    }
+
+    function toggleBrowse(event) {
+      event.preventDefault();
+      const section = document.getElementById('browse-section');
+      const expanded = section.classList.toggle('hidden') === false;
+      document.getElementById('browse-link').setAttribute('aria-expanded', String(expanded));
+      if (expanded) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderPets(pets, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      pets.forEach(pet => {
+        const card = document.createElement('div');
+        card.className = 'pet-card';
+        card.innerHTML = `
+          <div class="pet-img-box">
+            <img src="images/pet-${pet.numId}.jpg" 
+                 alt="${pet.name}" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+            <div class="fallback-box" style="display:none;">
+              <span>${EMOJIS[pet.species]}</span>
+              <span class="photo-plate-tag">PLATE ${pet.id}</span>
+            </div>
+          </div>
+          <div class="pet-info">
+            <div class="pet-header">
+              <div class="name-id-wrap">
+                <span class="pet-name">${pet.name}</span>
+                <span class="pet-id-tag">REF: ${pet.id}</span>
+              </div>
+              <span class="match-badge">${pet.matchRate}% Match</span>
+            </div>
+            <div class="meta-line">
+              <strong>Breed:</strong> ${pet.breed} &nbsp;•&nbsp; <strong>Age:</strong> ${pet.age}
+            </div>
+            <div class="meta-line">
+              <strong>Intake:</strong> ${pet.intake}
+            </div>
+            <div class="pet-story">
+              <h3>Meet ${pet.name}</h3>
+              <p>${pet.story}</p>
+            </div>
+            <p class="bio-text"><strong>Temperament:</strong> ${pet.temperament}.</p>
+            <div class="quirk-quote">
+              <strong>A little quirk:</strong> ${pet.quirk}
+            </div>
+            <p class="warden-notes"><strong>At home:</strong> ${pet.notes}</p>
+            <div class="tag-row">
+              <span class="tag">Energy: ${pet.vector[0]}/10</span>
+              <span class="tag">Affection: ${pet.vector[1]}/10</span>
+              <span class="tag">Voice: ${pet.vector[2]}/10</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
